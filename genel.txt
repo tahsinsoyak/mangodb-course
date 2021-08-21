@@ -1,0 +1,187 @@
+Collection => Tablo
+
+/* 
+Her girilen veri için özel bir _id atanıyor.
+id object olarak atanıyor.
+primarykey olarak düşünebiliriz.
+*/
+
+cls => cmd temizlemek için
+
+show dbs => databaseleri göstermek için 
+
+db => içinde olduğumuz db için
+
+use acme => database yaratmak veya geçiş yapmak için
+#eğer içinde collection yoksa show dbs'de gözükmez
+
+db.dropDatabase() => database silmek için
+
+db.createCollection('posts') => collection yaratmak için
+
+show collections => tabloları göstermek için
+
+
+#tabloya veri girişi
+#string,int,object,date,list aktarabliyoruz
+
+db.posts.insert({
+  title: 'Post One',
+  body: 'Body of post one',
+  category: 'News',
+  likes: 4,
+  tags: ['news', 'events'],
+  user: {
+    name: 'John Doe',
+    status: 'author'
+  },
+  date: Date()
+})
+
+#çoklu veri girişi için
+
+db.posts.insertMany([
+  {
+    title: 'Post Two',
+    body: 'Body of post two',
+    category: 'Technology',
+    date: Date()
+  },
+  {
+    title: 'Post Three',
+    body: 'Body of post three',
+    category: 'News',
+    date: Date()
+  },
+  {
+    title: 'Post Four',
+    body: 'Body of post three',
+    category: 'Entertainment',
+    date: Date()
+  }
+])
+
+db.posts.find() => bütün verileri bulmak için
+db.posts.find().pretty() => verileri güzel gözüken şekilde bulmak için
+
+db.posts.find({ category: 'News' }) => kategorilerdeki verileri göstermek için
+#herzaman sonuna .pretty() konulabilir
+
+
+db.posts.find().sort({ title: 1 }).pretty() => artan şekilde sıralamak için
+#asc şeklinde sıralamak için 1
+
+db.posts.find().sort({ title: -1 }).pretty() => azalan şekilde sıralamak için
+#desc şeklinde sıralamak için -1
+
+db.posts.find().count() => veri sayısı için
+db.posts.find({ category: 'news' }).count() => özel aramalı veri sayısı
+
+db.posts.find().limit(2).pretty() => veri sayısını limitlemek için
+
+db.posts.find().limit(2).sort({ title: 1 }).pretty() => zincirleme arama için
+
+#forEach kullanımı
+db.posts.find().forEach(function(doc) {
+  print("Blog Post: " + doc.title)
+})
+
+db.posts.findOne({ category: 'News' }) => bir satır bulmak
+
+#spesifik bulmak
+db.posts.find({ title: 'Post One' }, {
+  title: 1,
+  author: 1
+})
+
+
+#Güncelleme yapmak
+#eğer bütün verileri yazmazsak bütün veriyi değiştirdiği için
+#sadece yazdıklarımız gözükecek, değiştirmediğimiz category gidecektir
+
+db.posts.update({ title: 'Post Two' },
+{
+  title: 'Post Two',
+  body: 'New body for post 2',
+  date: Date()
+},
+{
+  upsert: true #paremetre eğer yoksa insert etmek için
+})
+
+#spesifik güncelleme yapmak
+#$set paremetresi değiştirmemizi sağlıyor
+
+db.posts.update({ title: 'Post Two' },
+{
+  $set: {
+    body: 'Body for post 2',
+    category: 'Technology'
+  }
+})
+
+#verileri arttırmak için
+db.posts.update({ title: 'Post Two' },
+{
+  $inc: {
+    likes: 5
+  }
+})
+
+
+#sütunları yeniden adlandırma 
+db.posts.update({ title: 'Post Two' },
+{
+  $rename: {
+    likes: 'views'
+  }
+})
+
+#genelde id kullanarak silinir
+db.posts.remove({ title: 'Post Four' }) => veri silme
+
+
+#comments yorum gömmek veriye
+db.posts.update({ title: 'Post One' },
+{
+  $set: {
+    comments: [
+      {
+        body: 'Comment One',
+        user: 'Mary Williams',
+        date: Date()
+      },
+      {
+        body: 'Comment Two',
+        user: 'Harry White',
+        date: Date()
+      }
+    ]
+  }
+})
+
+
+#elemana göre bulmak
+db.posts.find({
+  comments: {
+     $elemMatch: {
+       user: 'Mary Williams'
+       }
+    }
+  }
+)
+
+db.posts.createIndex({ title: 'text' }) => index eklemek
+
+#veri arama yarattığımız indexe göre
+db.posts.find({
+  $text: {
+    $search: "\"Post T\""
+    }
+})
+
+#büyüktür küçüktür greater than & greater than and equal
+db.posts.find({ views: { $gt: 2 } }) => 2den büyük olanlar
+db.posts.find({ views: { $gte: 7 } }) => 2den büyük ve eşit
+db.posts.find({ views: { $lt: 7 } }) => 2den küçük olanlar
+db.posts.find({ views: { $lte: 7 } }) => 2den küçük ve eşit olanlar
